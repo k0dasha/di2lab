@@ -1,5 +1,7 @@
 ﻿using System.CommandLine;
 
+string[] descriptions = new string[3] { "Точки", "Линии", "Круги" };
+
 Option<string> fileOption = new Option<string>("-file")
 {
     Description = "Указать файл, с которого будут читаться объекты"
@@ -20,7 +22,7 @@ rootCommand.SetAction(parseResult =>
 
     if (parseResult.GetValue(fileOption) is string filePath)
     {
-        s = File.ReadAllText(filePath);
+        s = ReadFile(filePath);
         objectsArr = GetObjects(s);
     }
     if (parseResult.GetValue(operOption) is string operationToDo)
@@ -28,10 +30,10 @@ rootCommand.SetAction(parseResult =>
         switch (operationToDo)
         {
             case "print":
-                ToPrint(objectsArr);
+                ToPrint(objectsArr, descriptions);
                 break;
             case "count":
-                ToCount(objectsArr);
+                ToCount(objectsArr, descriptions);
                 break;
             default:
                 Console.WriteLine($"Операции '{operationToDo}' не существует");
@@ -47,25 +49,48 @@ return result.Invoke();
 
 static string ReadFile(string path)
 {
-string objects = ReadFile(path);
+string objects = File.ReadAllText(path);
 return objects;
 }
 static List<object>[] GetObjects(string objectsString)
 {
     return null;
 }
-static void ToCount(List<object>[] lists)
+static void ToCount(List<object>[] lists, string[] figuresNames)
 {
-    string[] descriptions = new string[3] {"Точек", "Линий", "Кругов" };
     for (int i = 0; i < lists.Length; i++)
     {
         var count = lists[i].Count();
-        Console.WriteLine($"{descriptions[i]}: {count}");
+        Console.WriteLine($"{figuresNames[i]}: {count}");
     }
 }
-static void ToPrint(List<object>[] lists)
+static void ToPrint(List<object>[] lists, string[] figuresNames)
 {
+    string s = "";
 
+    for (int i = 0; i < lists.Length; i++)
+    {
+        foreach (var item in lists[i])
+        {
+            switch (i)
+            {
+                case 0:
+                    var p = (Point)item;
+                    s += $"Point({p.X}, {p.Y}) ";
+                    break;
+
+                case 1:
+                    var l = (Line)item;
+                    s+= $"Line(Point({l.begin.X}, {l.begin.Y}), Point({l.end.X}, {l.end.Y})) ";
+                    break;
+
+                case 2:
+                    var c = (Circle)item;
+                    s += $"Circle(Point({c.Center.X}, {c.Center.Y}), {c.Radius}) ";
+                    break;
+            }
+        }
+    }
 }
     public class Point
 {
