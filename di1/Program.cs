@@ -5,16 +5,58 @@ using System.Text;
 using System.Threading.Tasks;
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.IO;
 
 namespace di1
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            Circle cc = new Circle(new Point(3, 4), 7);
-            Console.WriteLine(cc.Radius);
+            Option<string> fileOption = new Option<string>("-file")
+            {
+                Description = "Указать файл, с которого будут читаться объекты"
+            };
+            Option<string> operOption = new Option<string>("-oper")
+            {
+                Description = "Задать операцию над объектом"
+            };
+
+            RootCommand rootCommand = new RootCommand("CLI App for lab2");
+            rootCommand.Options.Add(fileOption);
+            rootCommand.Options.Add(operOption);
+
+            rootCommand.SetAction(parseResult =>
+            {
+                string s = "";
+                if(parseResult.GetValue(fileOption) is string filePath)
+                {
+                    s = ReadFile(filePath);
+                }
+                Console.WriteLine(s);
+            });
+
+            ParseResult result = rootCommand.Parse(args);
+            return result.Invoke();
         }
+    
+    public static string ReadFile(string path)
+    {
+        string objects = ReadFile(path);
+            return objects;
+    }
+    public static void GetObjects(string objectsString)
+    {
+        
+    }
+    public static void ToCount()
+    {
+
+    }
+    public static void ToPrint()
+    {
+
+    }
     }
     public class Point
     {
