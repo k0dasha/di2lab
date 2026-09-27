@@ -12,29 +12,34 @@ namespace di1
     {
         static void Main(string[] args)
         {
-
+            Circle cc = new Circle(new Point(3, 4), 7);
+            Console.WriteLine(cc.Radius);
         }
     }
     public class Point
     {
-        int x;
-        int y;
+        public int X { get; set; }
+        public int Y { get; set; }
+        public Point(int x, int y)
+        {
+            X = x; Y = y;
+        }
     }
     public class Circle
     {
-        Point center;
-        Line radius;
-        Point no_center;
-        public Circle()
+        public Point Center { get; set; }
+        public int Radius { get; set; }
+
+        public Circle(Point centerPoint, int radius)
         {
-            center = new Point();
-            radius = new Line(center, no_center);
+            Center = centerPoint;
+            Radius = radius;
         }
     }
     public class Line
     {
-        Point begin;
-        Point end;
+        public Point begin { get; set; }
+        public Point end { get; set; }
         public Line(Point x1y1, Point x2y2)
         {
             begin = x1y1;
