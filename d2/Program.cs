@@ -1,6 +1,8 @@
 ﻿using System.CommandLine;
+using System.Text.RegularExpressions;
 
-string[] descriptions = new string[3] { "Точки", "Линии", "Круги" };
+string[] objects;
+List<object>[] objectsArr = new List<object>[3]; //POINTS, LINES, CIRCLES
 
 Option<string> fileOption = new Option<string>("-file")
 {
@@ -17,54 +19,83 @@ rootCommand.Options.Add(operOption);
 
 rootCommand.SetAction(parseResult =>
 {
-    string s = "";
-    List<object>[] objectsArr = new List<object>[3]; //POINTS, LINES, CIRCLES
-
     if (parseResult.GetValue(fileOption) is string filePath)
     {
-        s = ReadFile(filePath);
-        objectsArr = GetObjects(s);
+        objects = ReadFile(filePath);
+        objectsArr = GetObjects(objects);
     }
     if (parseResult.GetValue(operOption) is string operationToDo)
     {
         switch (operationToDo)
         {
             case "print":
-                ToPrint(objectsArr, descriptions);
+                ToPrint(objectsArr);
                 break;
             case "count":
-                ToCount(objectsArr, descriptions);
+                ToCount(objectsArr);
                 break;
             default:
                 Console.WriteLine($"Операции '{operationToDo}' не существует");
                 break;
-            
         }
     }
-    Console.WriteLine(s);
 });
 
 ParseResult result = rootCommand.Parse(args);
 return result.Invoke();
 
-static string ReadFile(string path)
+static string[] ReadFile(string path)
 {
-string objects = File.ReadAllText(path);
-return objects;
+    string[] objects = File.ReadAllLines(path);
+    return objects;
 }
-static List<object>[] GetObjects(string objectsString)
+static List<object>[] GetObjects(string[] objects)
 {
+    List<object>[] objectsArr = new List<object>[3];
+    foreach (string obj in objects)
+    {
+        if (Regex.IsMatch(obj, "^Line\\("))
+        {
+            Match match = Regex.Match(obj, "Line\\((.*)\\)");
+            string points = match.Groups[1].Value;
+            var matches = Regex.Matches(points, @"Point\([^)]*\)");
+            var point1 = CreatePoint(matches[0].Value);
+            var point2 = CreatePoint(matches[1].Value);
+            Line line = new Line(point1, point2);
+            objectsArr[1].Add(line);
+
+        }
+        if (Regex.IsMatch(obj, "^Circle\\("))
+        {
+            Match match = Regex.Match(obj, "Circle\\((.*)\\)");
+            string point_and_radius = match.Groups[1].Value;
+        }
+    }
     return null;
+    
 }
-static void ToCount(List<object>[] lists, string[] figuresNames)
+static Point CreatePoint(string pointString)
 {
+    Match match = Regex.Match(pointString, "Point\\((.*)\\)");
+    string xy = match.Groups[1].Value;
+    Match match1 = Regex.Match(xy, "(.*), (.*)");
+    int x = Convert.ToInt32(match1.Groups[1].Value);
+    int y = Convert.ToInt32(match1.Groups[2].Value);
+    Point point = new Point(x, y);
+    return point;
+}
+
+static void ToCount(List<object>[] lists)
+{
+    string[] figuresNames = new string[3] { "Точки", "Линии", "Круги" };
+
     for (int i = 0; i < lists.Length; i++)
     {
         var count = lists[i].Count();
         Console.WriteLine($"{figuresNames[i]}: {count}");
     }
 }
-static void ToPrint(List<object>[] lists, string[] figuresNames)
+static void ToPrint(List<object>[] lists)
 {
     string s = "";
 
@@ -72,20 +103,17 @@ static void ToPrint(List<object>[] lists, string[] figuresNames)
     {
         foreach (var item in lists[i])
         {
-            switch (i)
+            switch (item)
             {
-                case 0:
-                    var p = (Point)item;
+                case Point p:
                     s += $"Point({p.X}, {p.Y}) ";
                     break;
 
-                case 1:
-                    var l = (Line)item;
+                case Line l:
                     s+= $"Line(Point({l.begin.X}, {l.begin.Y}), Point({l.end.X}, {l.end.Y})) ";
                     break;
 
-                case 2:
-                    var c = (Circle)item;
+                case Circle c:
                     s += $"Circle(Point({c.Center.X}, {c.Center.Y}), {c.Radius}) ";
                     break;
             }
