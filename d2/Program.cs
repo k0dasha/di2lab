@@ -1,8 +1,6 @@
 ﻿using System.CommandLine;
+using System.Globalization;
 using System.Text.RegularExpressions;
-
-string[] objects;
-List<object>[] objectsArr = new List<object>[3]; //POINTS, LINES, CIRCLES
 
 Option<string> fileOption = new Option<string>("-file")
 {
@@ -19,9 +17,16 @@ rootCommand.Options.Add(operOption);
 
 rootCommand.SetAction(parseResult =>
 {
+    List<object>[] objectsArr = new List<object>[3]
+    {
+        new List<object>(),
+        new List<object>(),
+        new List<object>()
+    };
+
     if (parseResult.GetValue(fileOption) is string filePath)
     {
-        objects = ReadFile(filePath);
+        string[] objects = ReadFile(filePath);
         objectsArr = GetObjects(objects);
     }
     if (parseResult.GetValue(operOption) is string operationToDo)
@@ -46,15 +51,20 @@ return result.Invoke();
 
 static string[] ReadFile(string path)
 {
-    string[] objects = File.ReadAllLines(path);
-    return objects;
+    return File.ReadAllLines(path);
 }
 static List<object>[] GetObjects(string[] objects)
 {
-    List<object>[] objectsArr = new List<object>[3];
+    List<object>[] objectsArr = new List<object>[3]
+    {
+        new List<object>(),
+        new List<object>(),
+        new List<object>()
+    };
+
     foreach (string obj in objects)
     {
-        Match figureName = Regex.Match(obj, "(.*)\\(");
+        Match figureName = Regex.Match(obj, @"^(\w+)\(");
         switch (figureName.Groups[1].Value)
         {
             case "Point":
@@ -91,8 +101,8 @@ static Point CreatePoint(string pointString)
 {
     Match xy = Regex.Match(pointString, @"Point\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)\)$");
 
-    double x = Convert.ToDouble(xy.Groups[1].Value);
-    double y = Convert.ToDouble(xy.Groups[2].Value);
+    double x = Convert.ToDouble(xy.Groups[1].Value, CultureInfo.InvariantCulture);
+    double y = Convert.ToDouble(xy.Groups[2].Value, CultureInfo.InvariantCulture);
     Point point = new Point(x, y);
     return point;
 }
@@ -118,19 +128,20 @@ static void ToPrint(List<object>[] lists)
             switch (item)
             {
                 case Point p:
-                    s += $"Point({p.X}, {p.Y}) ";
+                    s += $"Point({p.X}, {p.Y}); ";
                     break;
 
                 case Line l:
-                    s+= $"Line(Point({l.begin.X}, {l.begin.Y}), Point({l.end.X}, {l.end.Y})) ";
+                    s+= $"Line(Point({l.begin.X}, {l.begin.Y}), Point({l.end.X}, {l.end.Y})); ";
                     break;
 
                 case Circle c:
-                    s += $"Circle(Point({c.Center.X}, {c.Center.Y}), {c.Radius}) ";
+                    s += $"Circle(Point({c.Center.X}, {c.Center.Y}), {c.Radius}); ";
                     break;
             }
         }
     }
+    Console.WriteLine(s);
 }
     public class Point
 {
