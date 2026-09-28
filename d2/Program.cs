@@ -54,33 +54,45 @@ static List<object>[] GetObjects(string[] objects)
     List<object>[] objectsArr = new List<object>[3];
     foreach (string obj in objects)
     {
-        if (Regex.IsMatch(obj, "^Line\\("))
+        Match figureName = Regex.Match(obj, "(.*)\\(");
+        switch (figureName.Groups[1].Value)
         {
-            Match match = Regex.Match(obj, "Line\\((.*)\\)");
-            string points = match.Groups[1].Value;
-            var matches = Regex.Matches(points, @"Point\([^)]*\)");
-            var point1 = CreatePoint(matches[0].Value);
-            var point2 = CreatePoint(matches[1].Value);
-            Line line = new Line(point1, point2);
-            objectsArr[1].Add(line);
+            case "Point":
+                var p = CreatePoint(obj);
+                objectsArr[0].Add(p);
+                break;
 
-        }
-        if (Regex.IsMatch(obj, "^Circle\\("))
-        {
-            Match match = Regex.Match(obj, "Circle\\((.*)\\)");
-            string point_and_radius = match.Groups[1].Value;
+            case "Line":
+                Match linePoints = Regex.Match(obj, @"Line\((Point\([^)]*\)),\s*(Point\([^)]*\))\)$");
+                var point1 = CreatePoint(linePoints.Groups[1].Value);
+                var point2 = CreatePoint(linePoints.Groups[2].Value);
+                Line l = new Line(point1, point2);
+                objectsArr[1].Add(l);
+
+                break;
+
+            case "Circle":
+                Match circleOps = Regex.Match(obj, @"Circle\((Point\([^)]*\)),\s*(\d+(?:\.\d+)?)\)$");
+                var point = CreatePoint(circleOps.Groups[1].Value);
+                var r = Convert.ToInt32(circleOps.Groups[2].Value);
+                Circle c = new Circle(point, r);
+                objectsArr[2].Add(c);
+
+                break;
+
+            default:
+                break;
         }
     }
-    return null;
+    return objectsArr;
     
 }
 static Point CreatePoint(string pointString)
 {
-    Match match = Regex.Match(pointString, "Point\\((.*)\\)");
-    string xy = match.Groups[1].Value;
-    Match match1 = Regex.Match(xy, "(.*), (.*)");
-    int x = Convert.ToInt32(match1.Groups[1].Value);
-    int y = Convert.ToInt32(match1.Groups[2].Value);
+    Match xy = Regex.Match(pointString, @"Point\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)\)$");
+
+    double x = Convert.ToDouble(xy.Groups[1].Value);
+    double y = Convert.ToDouble(xy.Groups[2].Value);
     Point point = new Point(x, y);
     return point;
 }
@@ -122,9 +134,9 @@ static void ToPrint(List<object>[] lists)
 }
     public class Point
 {
-    public int X { get; set; }
-    public int Y { get; set; }
-    public Point(int x, int y)
+    public double X { get; set; }
+    public double Y { get; set; }
+    public Point(double x, double y)
     {
         X = x; Y = y;
     }
