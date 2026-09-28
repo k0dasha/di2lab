@@ -61,25 +61,31 @@ static ListsOfFigures GetObjects(string[] objects)
         {
             case "Point":
                 var p = CreatePoint(obj);
-                listsOfFigures.Points.Add(p);
+                if (p != null)
+                    listsOfFigures.Points.Add(p);
                 break;
 
             case "Line":
                 Match linePoints = Regex.Match(obj, @"Line\((Point\([^)]*\)),\s*(Point\([^)]*\))\)$");
                 var point1 = CreatePoint(linePoints.Groups[1].Value);
                 var point2 = CreatePoint(linePoints.Groups[2].Value);
-                Line l = new Line(point1, point2);
-                listsOfFigures.Lines.Add(l);
+                if (point1 != null && point2 != null)
+                {
+                    Line l = new Line(point1, point2);
+                    listsOfFigures.Lines.Add(l);
+                }
 
                 break;
 
             case "Circle":
                 Match circleOps = Regex.Match(obj, @"Circle\((Point\([^)]*\)),\s*(\d+(?:\.\d+)?)\)$");
                 var point = CreatePoint(circleOps.Groups[1].Value);
-                var r = Convert.ToInt32(circleOps.Groups[2].Value);
-                Circle c = new Circle(point, r);
-                listsOfFigures.Circles.Add(c);
 
+                if (int.TryParse(circleOps.Groups[2].Value, out int r) && point != null)
+                {
+                    Circle c = new Circle(point, r);
+                    listsOfFigures.Circles.Add(c);
+                }
                 break;
 
             default:
@@ -92,10 +98,17 @@ static Point CreatePoint(string pointString)
 {
     Match xy = Regex.Match(pointString, @"Point\((\d+(?:\.\d+)?),\s*(\d+(?:\.\d+)?)\)$");
 
-    double x = Convert.ToDouble(xy.Groups[1].Value, CultureInfo.InvariantCulture);
-    double y = Convert.ToDouble(xy.Groups[2].Value, CultureInfo.InvariantCulture);
-    Point point = new Point(x, y);
-    return point;
+    if (xy.Success)
+    {
+        double x = Convert.ToDouble(xy.Groups[1].Value, CultureInfo.InvariantCulture);
+        double y = Convert.ToDouble(xy.Groups[2].Value, CultureInfo.InvariantCulture);
+        Point point = new Point(x, y);
+        return point;
+    }
+    else
+    {
+        return null;
+    }
 }
 
 static void ToCount(ListsOfFigures lists)
