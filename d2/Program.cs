@@ -1,6 +1,8 @@
 ﻿using System.CommandLine;
+using System.Drawing;
 using System.Globalization;
 using System.Text.RegularExpressions;
+
 
 Option<string> fileOption = new Option<string>("-file")
 {
@@ -17,27 +19,22 @@ rootCommand.Options.Add(operOption);
 
 rootCommand.SetAction(parseResult =>
 {
-    List<object>[] objectsArr = new List<object>[3]
-    {
-        new List<object>(),
-        new List<object>(),
-        new List<object>()
-    };
+    ListsOfFigures figures = new ListsOfFigures();
 
     if (parseResult.GetValue(fileOption) is string filePath)
     {
         string[] objects = ReadFile(filePath);
-        objectsArr = GetObjects(objects);
+        figures = GetObjects(objects);
     }
     if (parseResult.GetValue(operOption) is string operationToDo)
     {
         switch (operationToDo)
         {
             case "print":
-                ToPrint(objectsArr);
+                ToPrint(figures);
                 break;
             case "count":
-                ToCount(objectsArr);
+                ToCount(figures);
                 break;
             default:
                 Console.WriteLine($"Операции '{operationToDo}' не существует");
@@ -53,14 +50,9 @@ static string[] ReadFile(string path)
 {
     return File.ReadAllLines(path);
 }
-static List<object>[] GetObjects(string[] objects)
+static ListsOfFigures GetObjects(string[] objects)
 {
-    List<object>[] objectsArr = new List<object>[3]
-    {
-        new List<object>(),
-        new List<object>(),
-        new List<object>()
-    };
+    ListsOfFigures listsOfFigures = new ListsOfFigures();
 
     foreach (string obj in objects)
     {
@@ -69,7 +61,7 @@ static List<object>[] GetObjects(string[] objects)
         {
             case "Point":
                 var p = CreatePoint(obj);
-                objectsArr[0].Add(p);
+                listsOfFigures.Points.Add(p);
                 break;
 
             case "Line":
@@ -77,7 +69,7 @@ static List<object>[] GetObjects(string[] objects)
                 var point1 = CreatePoint(linePoints.Groups[1].Value);
                 var point2 = CreatePoint(linePoints.Groups[2].Value);
                 Line l = new Line(point1, point2);
-                objectsArr[1].Add(l);
+                listsOfFigures.Lines.Add(l);
 
                 break;
 
@@ -86,7 +78,7 @@ static List<object>[] GetObjects(string[] objects)
                 var point = CreatePoint(circleOps.Groups[1].Value);
                 var r = Convert.ToInt32(circleOps.Groups[2].Value);
                 Circle c = new Circle(point, r);
-                objectsArr[2].Add(c);
+                listsOfFigures.Circles.Add(c);
 
                 break;
 
@@ -94,8 +86,7 @@ static List<object>[] GetObjects(string[] objects)
                 break;
         }
     }
-    return objectsArr;
-    
+    return listsOfFigures;
 }
 static Point CreatePoint(string pointString)
 {
@@ -107,50 +98,32 @@ static Point CreatePoint(string pointString)
     return point;
 }
 
-static void ToCount(List<object>[] lists)
+static void ToCount(ListsOfFigures lists)
 {
-    string[] figuresNames = new string[3] { "Точки", "Линии", "Круги" };
-
-    for (int i = 0; i < lists.Length; i++)
-    {
-        var count = lists[i].Count();
-        Console.WriteLine($"{figuresNames[i]}: {count}");
-    }
+    Console.WriteLine($"Точки: {lists.Points.Count}");
+    Console.WriteLine($"Линии: {lists.Lines.Count}");
+    Console.WriteLine($"Круги: {lists.Circles.Count}");
 }
-static void ToPrint(List<object>[] lists)
+static void ToPrint(ListsOfFigures lists)
 {
     string s = "";
 
-    for (int i = 0; i < lists.Length; i++)
-    {
-        foreach (var item in lists[i])
-        {
-            switch (item)
-            {
-                case Point p:
-                    s += $"Point({p.X}, {p.Y}); ";
-                    break;
-
-                case Line l:
-                    s+= $"Line(Point({l.begin.X}, {l.begin.Y}), Point({l.end.X}, {l.end.Y})); ";
-                    break;
-
-                case Circle c:
-                    s += $"Circle(Point({c.Center.X}, {c.Center.Y}), {c.Radius}); ";
-                    break;
-            }
-        }
-    }
+    foreach (Point p in lists.Points)
+        s += $"Point({p.X}, {p.Y}); ";
+    foreach (Line l in lists.Lines)
+        s += $"Line(Point({l.begin.X}, {l.begin.Y}), Point({l.end.X}, {l.end.Y})); ";
+    foreach (Circle c in lists.Circles)
+        s += $"Circle(Point({c.Center.X}, {c.Center.Y}), {c.Radius}); ";
     Console.WriteLine(s);
 }
-    public class Point
+public class Point
 {
-    public double X { get; set; }
-    public double Y { get; set; }
-    public Point(double x, double y)
-    {
-        X = x; Y = y;
-    }
+public double X { get; set; }
+public double Y { get; set; }
+public Point(double x, double y)
+{
+    X = x; Y = y;
+}
 }
 public class Circle
 {
@@ -172,4 +145,10 @@ public class Line
         begin = x1y1;
         end = x2y2;
     }
+}
+public class ListsOfFigures
+{
+    public List<Point> Points { get; set; } = new List<Point>();
+    public List<Line> Lines { get; set; } = new List<Line>();
+    public List<Circle> Circles { get; set; } = new List<Circle>();
 }
